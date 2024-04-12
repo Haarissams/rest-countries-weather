@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Country Information</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+
+<div class="container">
+  <h1 class="mt-4 mb-4 text-center">Countries Information</h1>
+  <div class="row" id="countryCards"></div>
+</div>
+
+<script>
+// Function to fetch country data
+async function fetchCountryData() {
+  try {
+    const response = await fetch('https://restcountries.com/v3.1/all');
+    const countries = await response.json();
+    return countries;
+  } catch (error) {
+    console.error('Error fetching country data:', error);
+  }
+}
+
+// Function to fetch weather data
+async function fetchWeatherData(lat, lon) {
+  const apiKey = 'YOUR_OPENWEATHERMAP_API_KEY';
+  const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}`;
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    return data.weather[0].description;
+  } catch (error) {
+    console.error('Error fetching weather data:', error);
+  }
+}
+
+// Function to create cards for each country
+async function createCountryCards() {
+  const countries = await fetchCountryData();
+  const countryCardsContainer = document.getElementById('countryCards');
+
+  countries.forEach(async country => {
+    const capital = country.capital[0] || 'N/A';
+    const latlng = country.latlng || ['N/A', 'N/A'];
+    const flag = country.flags.png || '';
+    const region = country.region || 'N/A';
+    const name = country.name.common || 'N/A';
+    const countryCode = country.cca2 || 'N/A';
+    const weather = await fetchWeatherData(latlng[0], latlng[1]);
+
+    const card = `
+      <div class="col-lg-4 col-sm-12 mb-4">
+        <div class="card">
+          <img src="${flag}" class="card-img-top" alt="Flag">
+          <div class="card-body">
+            <h5 class="card-title">${name}</h5>
+            <p class="card-text">Capital: ${capital}</p>
+            <p class="card-text">Lat/Lng: ${latlng.join(', ')}</p>
+            <p class="card-text">Region: ${region}</p>
+            <p class="card-text">Country Code: ${countryCode}</p>
+            <p class="card-text">Weather: ${weather}</p>
+            <button class="btn btn-primary" onclick="checkWeather('${countryCode}', ${latlng[0]}, ${latlng[1]})">Check Weather</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    countryCardsContainer.innerHTML += card;
+  });
+}
+
+// Function to update weather information when the button is clicked
+async function checkWeather(countryCode, lat, lon) {
+  const weatherSpan = document.getElementById(`weather-${countryCode}`);
+  const weather = await fetchWeatherData(lat, lon);
+  weatherSpan.textContent = weather;
+}
+
+// Call the function to create country cards when the page loads
+window.onload = createCountryCards;
+</script>
+
+</body>
+</html>
